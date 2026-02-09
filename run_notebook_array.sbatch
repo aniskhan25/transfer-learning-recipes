@@ -15,7 +15,7 @@
 set -euo pipefail
 
 source /scratch/project_2014553/anisrahm/venvs/marimo/bin/activate
-export PYTHONPATH=/scratch/project_2014553/anisrahm/recursive-training-recipes/src:${PYTHONPATH:-}
+export PYTHONPATH=/scratch/project_2014553/anisrahm/transfer-learning-recipes/src:${PYTHONPATH:-}
 
 ROOT="/scratch/project_2014553/anisrahm/transfer-learning-recipes"
 NOTEBOOKS=(
