@@ -1,0 +1,28 @@
+seed: 1
+output_dir: outputs
+
+data:
+  data_dir: ./data
+  source_classes: [2, 3, 4, 5, 6, 7]
+  target_classes: [2, 4, 6]
+  source_train_per_class: 1000
+  source_test_per_class: 300
+  target_train_per_class: 40
+  target_test_per_class: 300
+  probe_per_class: 120
+  batch_size: 128
+  num_workers: 2
+
+train:
+  source_epochs: 6
+  target_epochs: 14
+  lr_source: 0.03
+  lr_target: 0.02
+  momentum: 0.9
+  weight_decay: 0.0005
+  gradual_schedule:
+    "4": ["backbone.layer4"]
+    "8": ["backbone.layer3", "backbone.layer2"]
+    "11": ["backbone.layer1", "backbone.bn1", "backbone.conv1"]
+
+methods: ["feature_extraction", "gradual_unfreeze", "naive_finetune"]

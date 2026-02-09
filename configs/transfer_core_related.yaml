@@ -1,0 +1,28 @@
+seed: 0
+output_dir: outputs
+
+data:
+  data_dir: ./data
+  source_classes: [2, 3, 4, 5, 6, 7]  # animals
+  target_classes: [3, 5, 7]            # cat, dog, horse
+  source_train_per_class: 1000
+  source_test_per_class: 300
+  target_train_per_class: 80
+  target_test_per_class: 300
+  probe_per_class: 120
+  batch_size: 128
+  num_workers: 2
+
+train:
+  source_epochs: 6
+  target_epochs: 10
+  lr_source: 0.03
+  lr_target: 0.01
+  momentum: 0.9
+  weight_decay: 0.0005
+  gradual_schedule:
+    "2": ["backbone.layer4"]
+    "5": ["backbone.layer3", "backbone.layer2"]
+    "7": ["backbone.layer1", "backbone.bn1", "backbone.conv1"]
+
+methods: ["scratch", "feature_extraction", "gradual_unfreeze", "naive_finetune"]
