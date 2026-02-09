@@ -1,6 +1,4 @@
-# Supplemental Transfer: comprehensive transfer-learning recipes
-
-This folder mirrors the `supplemental_1` philosophy: config-driven experiments, reusable methods, and notebooks that combine hypothesis, ablations, and stability instrumentation.
+# Comprehensive transfer-learning recipes
 
 The corresponding blog post keeps intuition simple. The notebooks here intentionally go deeper.
 
