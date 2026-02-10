@@ -1,20 +1,18 @@
-"""Supervised trainer."""
+"""Compatibility wrapper for supervised training.
+
+The canonical implementation lives in ``methods.supervised``.
+Keep this module to avoid breaking older imports.
+"""
 
 from __future__ import annotations
-
-from dataclasses import dataclass
-from typing import Dict, List
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from utils.progress import progress
+from methods.supervised import SupervisedResult, run_supervised as _run_supervised
 
-
-@dataclass
-class TrainResult:
-    history: List[Dict[str, float]]
+TrainResult = SupervisedResult
 
 
 def run_supervised(
@@ -26,30 +24,12 @@ def run_supervised(
     epochs: int,
     use_progress: bool = False,
 ) -> TrainResult:
-    model.to(device)
-    ce = nn.CrossEntropyLoss()
-    history: List[Dict[str, float]] = []
-
-    for epoch in progress(range(epochs), enabled=use_progress, desc="supervised epochs"):
-        model.train()
-        for images, labels in train_loader:
-            images, labels = images.to(device), labels.to(device)
-            logits = model(images)
-            loss = ce(logits, labels)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-        model.eval()
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for images, labels in test_loader:
-                images, labels = images.to(device), labels.to(device)
-                pred = model(images).argmax(dim=1)
-                correct += (pred == labels).sum().item()
-                total += labels.numel()
-
-        history.append({"epoch": float(epoch), "test_acc": correct / total if total else 0.0})
-
-    return TrainResult(history=history)
+    return _run_supervised(
+        model=model,
+        labeled_loader=train_loader,
+        test_loader=test_loader,
+        optimizer=optimizer,
+        device=device,
+        epochs=epochs,
+        use_progress=use_progress,
+    )
