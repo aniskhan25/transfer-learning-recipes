@@ -20,6 +20,30 @@ class FitHistory:
     history: List[Dict[str, float]]
 
 
+def _build_optimizer(
+    model: nn.Module,
+    optimizer_name: str,
+    lr: float,
+    momentum: float,
+    weight_decay: float,
+) -> torch.optim.Optimizer:
+    params = [p for p in model.parameters() if p.requires_grad]
+    if optimizer_name == "sgd":
+        return torch.optim.SGD(
+            params,
+            lr=lr,
+            momentum=momentum,
+            weight_decay=weight_decay,
+        )
+    if optimizer_name == "adamw":
+        return torch.optim.AdamW(
+            params,
+            lr=lr,
+            weight_decay=weight_decay,
+        )
+    raise ValueError(f"Unknown optimizer: {optimizer_name}")
+
+
 def evaluate_classifier(model: nn.Module, loader: DataLoader, device: torch.device) -> float:
     model.eval()
     correct = 0
@@ -90,15 +114,11 @@ def pretrain_source(
     lr: float,
     weight_decay: float,
     momentum: float,
+    optimizer_name: str = "sgd",
     use_progress: bool = False,
 ) -> FitHistory:
     model.to(device)
-    optimizer = torch.optim.SGD(
-        model.parameters(),
-        lr=lr,
-        momentum=momentum,
-        weight_decay=weight_decay,
-    )
+    optimizer = _build_optimizer(model, optimizer_name, lr, momentum, weight_decay)
     ce = nn.CrossEntropyLoss()
     history: List[Dict[str, float]] = []
 
@@ -129,6 +149,7 @@ def run_target_adaptation(
     lr: float,
     weight_decay: float,
     momentum: float,
+    optimizer_name: str = "sgd",
     gradual_schedule: Dict[int, List[str]] | None = None,
     use_progress: bool = False,
 ) -> FitHistory:
@@ -151,12 +172,7 @@ def run_target_adaptation(
     else:
         raise ValueError(f"Unknown strategy: {strategy}")
 
-    optimizer = torch.optim.SGD(
-        [p for p in model.parameters() if p.requires_grad],
-        lr=lr,
-        momentum=momentum,
-        weight_decay=weight_decay,
-    )
+    optimizer = _build_optimizer(model, optimizer_name, lr, momentum, weight_decay)
 
     feature_ref = collect_features(model, target_probe, device)
     history: List[Dict[str, float]] = []
@@ -164,12 +180,7 @@ def run_target_adaptation(
     for epoch in progress(range(epochs), enabled=use_progress, desc=f"{strategy} target train"):
         if strategy == "gradual_unfreeze" and epoch in gradual_schedule:
             model.unfreeze_stages(gradual_schedule[epoch])
-            optimizer = torch.optim.SGD(
-                [p for p in model.parameters() if p.requires_grad],
-                lr=lr,
-                momentum=momentum,
-                weight_decay=weight_decay,
-            )
+            optimizer = _build_optimizer(model, optimizer_name, lr, momentum, weight_decay)
 
         model.train()
         grad_norm_steps = []
